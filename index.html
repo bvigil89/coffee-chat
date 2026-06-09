@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Coffee Chat — TMO</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fff;--bg2:#f5f5f3;--bg3:#ebebea;
+  --text:#1a1a1a;--text2:#6b6b6b;--text3:#aaa;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.22);
+  --r-md:8px;--r-lg:12px;
+  --green:#1D9E75;--green-bg:#E1F5EE;--green-text:#085041;
+  --amber-bg:#FAEEDA;--amber-text:#633806;
+  --blue-bg:#E6F1FB;--blue-text:#0C447C;
+  --red-bg:#FCEBEB;--red-text:#A32D2D;
+  --slack:#4A154B;--slack-bg:#F4ECF7;
+}
+@media(prefers-color-scheme:dark){:root{--bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;--text:#f0f0f0;--text2:#9a9a9a;--text3:#555;--border:rgba(255,255,255,0.09);--border2:rgba(255,255,255,0.2)}}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── PIN screen ── */
+.pin-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+.pin-card{width:100%;max-width:360px;border:0.5px solid var(--border);border-radius:var(--r-lg);padding:2rem;background:var(--bg);text-align:center}
+.pin-logo{font-size:36px;margin-bottom:8px}
+.pin-title{font-size:20px;font-weight:500;margin-bottom:4px}
+.pin-sub{font-size:13px;color:var(--text2);margin-bottom:1.5rem}
+.pin-dots{display:flex;gap:12px;justify-content:center;margin-bottom:1.5rem}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:var(--bg3);border:1.5px solid var(--border2);transition:all .15s}
+.pin-dot.filled{background:var(--text);border-color:var(--text)}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.pin-key{padding:14px;font-size:18px;font-weight:500;border:0.5px solid var(--border2);border-radius:var(--r-md);cursor:pointer;background:var(--bg);color:var(--text);font-family:inherit;transition:all .15s}
+.pin-key:hover{background:var(--bg2)}
+.pin-key:active{background:var(--bg3)}
+.pin-key.del{font-size:14px;color:var(--text2)}
+.pin-error{font-size:13px;color:var(--red-text);margin-top:8px;min-height:20px}
+
+/* ── App ── */
+.app-wrap{display:none}
+.container{max-width:900px;margin:0 auto;padding:2rem 1.5rem 4rem}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+h1{font-size:22px;font-weight:500}
+.subtitle{font-size:13px;color:var(--text2);margin-bottom:1.5rem}
+.tabs{display:flex;gap:2px;border-bottom:0.5px solid var(--border);margin-bottom:1.5rem;overflow-x:auto}
+.tab{padding:8px 16px;font-size:14px;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;color:var(--text2);font-family:inherit;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500}
+.tab:hover:not(.active){color:var(--text)}
+.section{display:none}.section.active{display:block}
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--r-lg);padding:1rem 1.25rem;margin-bottom:1rem}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+.card-title{font-size:15px;font-weight:500}
+.card-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
+.stat{background:var(--bg2);border-radius:var(--r-md);padding:12px;text-align:center}
+.stat-num{font-size:22px;font-weight:500}
+.stat-label{font-size:11px;color:var(--text2);margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font-size:13px;font-weight:500;border:0.5px solid var(--border2);border-radius:var(--r-md);cursor:pointer;background:var(--bg);color:var(--text);font-family:inherit;transition:all .15s;white-space:nowrap;text-decoration:none}
+.btn:hover{background:var(--bg2)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--text);color:var(--bg);border-color:var(--text)}
+.btn-primary:hover{opacity:.82}
+.btn-slack{background:var(--slack);color:#fff;border-color:var(--slack)}
+.btn-slack:hover{opacity:.85}
+.btn-green{background:var(--green-bg);color:var(--green-text);border-color:var(--green)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem;align-items:center}
+.input{width:100%;padding:7px 10px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);font-family:inherit}
+.input:focus{outline:none;border-color:var(--text)}
+select.input{cursor:pointer}
+textarea.input{resize:vertical}
+
+/* Pair cards */
+.pair-card{display:flex;align-items:flex-start;gap:12px;padding:1rem 1.25rem;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--r-lg);margin-bottom:10px}
+.pair-card.connected{border-color:var(--green);background:var(--green-bg)}
+.avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0}
+.pair-names{font-size:14px;font-weight:500;margin-bottom:3px}
+.pair-meta{font-size:12px;color:var(--text2);margin-bottom:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.question-box{background:var(--bg2);border-radius:var(--r-md);padding:9px 12px;font-size:13px;color:var(--text2);border-left:3px solid}
+.q-cat-label{font-size:11px;font-weight:500;display:block;margin-bottom:2px}
+
+/* Badges */
+.badge{display:inline-block;padding:2px 7px;border-radius:999px;font-size:11px;font-weight:500}
+.badge-purple{background:#EEEDFE;color:#3C3489}
+.badge-teal{background:#E1F5EE;color:#085041}
+.badge-coral{background:#FAECE7;color:#712B13}
+.badge-blue{background:#E6F1FB;color:#0C447C}
+.badge-amber{background:#FAEEDA;color:#633806}
+.badge-pink{background:#FBEAF0;color:#72243E}
+.badge-gray{background:#F1EFE8;color:#5F5E5A}
+.connected-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;font-size:11px;font-weight:500;background:var(--green-bg);color:var(--green-text)}
+.reminder-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;font-size:11px;font-weight:500;background:var(--amber-bg);color:var(--amber-text)}
+
+/* Employee table */
+.emp-table{width:100%;border-collapse:collapse}
+.emp-table th{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;padding:8px 10px;text-align:left;border-bottom:0.5px solid var(--border);background:var(--bg2);white-space:nowrap}
+.emp-table td{padding:8px 10px;font-size:13px;border-bottom:0.5px solid var(--border);vertical-align:middle}
+.emp-table tr:last-child td{border-bottom:none}
+.emp-table tr:hover td{background:var(--bg2)}
+.emp-table tr.opted-out td{opacity:.5}
+.emp-email{color:var(--text2);font-size:12px}
+.pill-in{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:500;background:var(--green-bg);color:var(--green-text);cursor:pointer;border:1px solid transparent;font-family:inherit;white-space:nowrap}
+.pill-out{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:500;background:var(--bg3);color:var(--text2);cursor:pointer;border:1px solid transparent;font-family:inherit;white-space:nowrap}
+.pill-in:hover{filter:brightness(.93)}.pill-out:hover{filter:brightness(.93)}
+.dm-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:var(--r-md);font-size:11px;font-weight:500;background:var(--slack-bg);color:var(--slack);border:0.5px solid var(--slack);cursor:pointer;font-family:inherit;white-space:nowrap}
+.dm-btn:hover{opacity:.85}
+.dm-btn.sent{background:var(--green-bg);color:var(--green-text);border-color:var(--green)}
+
+/* Search */
+.search-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.search-wrap{position:relative;flex:1;min-width:180px}
+.search-wrap .ti{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--text2);pointer-events:none}
+.search-input{width:100%;padding:7px 10px 7px 32px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--r-md);background:var(--bg);color:var(--text);font-family:inherit}
+.search-input:focus{outline:none;border-color:var(--text)}
+
+/* Slack status bar */
+.slack-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--r-md);font-size:13px;margin-bottom:1.25rem}
+.slack-bar.ok{background:var(--green-bg);color:var(--green-text)}
+.slack-bar.warn{background:var(--amber-bg);color:var(--amber-text)}
+.slack-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-ok{background:var(--green)}.dot-warn{background:#E67E22}
+
+/* Settings */
+.settings-row{display:flex;flex-direction:column;gap:4px;margin-bottom:1.25rem}
+.settings-label{font-size:13px;font-weight:500}
+.settings-hint{font-size:12px;color:var(--text2);line-height:1.5}
+
+/* Q items */
+.q-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border)}
+.q-item:last-child{border-bottom:none}
+
+/* Toast */
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);border-radius:var(--r-md);padding:10px 18px;font-size:13px;display:none;align-items:center;gap:8px;z-index:999;box-shadow:0 4px 24px rgba(0,0,0,.18);white-space:nowrap}
+.toast-success{background:#1a1a1a;color:#fff}
+.toast-error{background:#A32D2D;color:#fff}
+.toast-info{background:var(--slack);color:#fff}
+
+.empty{text-align:center;padding:2.5rem;color:var(--text2);font-size:14px}
+.muted{color:var(--text3);font-style:italic}
+.divider{border:none;border-top:0.5px solid var(--border);margin:1rem 0}
+</style>
+</head>
+<body>
+
+<!-- ── PIN SCREEN ── -->
+<div class="pin-wrap" id="pin-wrap" style="display:flex">
+  <div class="pin-card">
+    <div class="pin-logo">☕</div>
+    <div class="pin-title">Coffee Chat</div>
+    <div class="pin-sub">Admin access · Enter your PIN</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key" onclick="pinPress('0')" style="grid-column:2">0</button>
+      <button class="pin-key del" onclick="pinDel()"><i class="ti ti-backspace"></i></button>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div class="app-wrap" id="app-wrap" style="display:none">
+  <div class="container">
+    <div class="topbar">
+      <h1>☕ Coffee Chat</h1>
+      <button class="btn btn-sm" onclick="logout()"><i class="ti ti-lock"></i> Lock</button>
+    </div>
+    <p class="subtitle">Admin dashboard · TMO internal</p>
+
+    <div id="slack-status-bar"></div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('pairs')">Pairings</button>
+      <button class="tab" onclick="switchTab('employees')">Employees</button>
+      <button class="tab" onclick="switchTab('questions')">Questions</button>
+      <button class="tab" onclick="switchTab('settings')">⚙ Settings</button>
+    </div>
+
+    <!-- PAIRINGS -->
+    <div id="sec-pairs" class="section active">
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-num" id="stat-in">0</div><div class="stat-label">Participating</div></div>
+        <div class="stat"><div class="stat-num" id="stat-pairs">0</div><div class="stat-label">Pairs this round</div></div>
+        <div class="stat"><div class="stat-num" id="stat-connected">0</div><div class="stat-label">Connected ✓</div></div>
+        <div class="stat"><div class="stat-num" id="stat-pending">0</div><div class="stat-label">Pending</div></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generatePairs()"><i class="ti ti-refresh"></i> Generate pairings</button>
+        <button class="btn btn-slack" id="btn-send-slack" onclick="sendToSlack()"><i class="ti ti-brand-slack"></i> Send to Slack</button>
+        <button class="btn" id="btn-reminders" onclick="sendReminders()"><i class="ti ti-bell"></i> Send reminders</button>
+        <button class="btn" onclick="copyPairSummary()"><i class="ti ti-copy"></i> Copy summary</button>
+      </div>
+      <div id="pairs-list"><div class="empty">Click "Generate pairings" to create this round's matches.<br><span style="font-size:12px;color:var(--text3)">Make sure employees have teams assigned first.</span></div></div>
+    </div>
+
+    <!-- EMPLOYEES -->
+    <div id="sec-employees" class="section">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Roster</div>
+            <div class="card-sub" id="roster-sub"></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-slack btn-sm" onclick="dmAll()" id="btn-dm-all"><i class="ti ti-brand-slack"></i> DM everyone to join</button>
+            <button class="btn btn-sm" onclick="copyOptInMsg()"><i class="ti ti-copy"></i> Copy opt-in message</button>
+            <button class="btn btn-sm" onclick="addEmployee()"><i class="ti ti-plus"></i> Add</button>
+          </div>
+        </div>
+        <div class="search-row">
+          <div class="search-wrap">
+            <i class="ti ti-search"></i>
+            <input class="search-input" id="emp-search" placeholder="Search name or email..." oninput="renderEmployees()" />
+          </div>
+          <select class="input" id="filter-team" style="width:155px;flex-shrink:0" onchange="renderEmployees()">
+            <option value="">All teams</option>
+          </select>
+          <select class="input" id="filter-status" style="width:140px;flex-shrink:0" onchange="renderEmployees()">
+            <option value="">All</option>
+            <option value="in">Participating</option>
+            <option value="out">Opted out</option>
+            <option value="noteam">No team</option>
+          </select>
+        </div>
+        <div style="overflow:hidden;border-radius:var(--r-md);border:0.5px solid var(--border)">
+          <div id="emp-table-wrap"></div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm btn-green" onclick="setAllIn(true)"><i class="ti ti-check"></i> Opt everyone in</button>
+          <button class="btn btn-sm" onclick="setAllIn(false)"><i class="ti ti-x"></i> Opt everyone out</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUESTIONS -->
+    <div id="sec-questions" class="section">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Icebreaker question bank <span style="font-size:12px;font-weight:400;color:var(--text2)" id="q-count"></span></span>
+          <button class="btn btn-sm" onclick="addQuestion()"><i class="ti ti-plus"></i> Add question</button>
+        </div>
+        <div id="q-list"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="sec-settings" class="section">
+      <div class="card">
+        <div class="card-header"><span class="card-title"><i class="ti ti-brand-slack" style="color:var(--slack)"></i> Slack configuration</span></div>
+        <div class="settings-row">
+          <div class="settings-label">Bot token <span style="color:var(--red-text)">*</span></div>
+          <div class="settings-hint">From <a href="https://api.slack.com/apps" target="_blank">api.slack.com</a> → Your App → OAuth & Permissions → Bot User OAuth Token.<br>Required scopes: <code>chat:write</code> · <code>im:write</code> · <code>users:read</code> · <code>users:read.email</code></div>
+          <input class="input" id="slack-token" type="password" placeholder="xoxb-..." style="margin-top:6px" />
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Announcement channel</div>
+          <div class="settings-hint">Channel name without #. Invite the bot first with <code>/invite @YourBotName</code> in Slack.</div>
+          <input class="input" id="slack-channel" placeholder="coffee-chat" style="margin-top:6px" />
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Reminder delay (days)</div>
+          <div class="settings-hint">How many days after pairing before reminder DMs go out to unconnected pairs.</div>
+          <input class="input" id="reminder-days" type="number" value="3" min="1" max="30" style="width:80px;margin-top:6px" />
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+          <button class="btn btn-primary" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save</button>
+          <button class="btn" onclick="testSlack()"><i class="ti ti-send"></i> Test connection</button>
+          <span id="test-result" style="font-size:13px;color:var(--text2)"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Admin PIN</span></div>
+        <div class="settings-row">
+          <div class="settings-label">Change PIN</div>
+          <div class="settings-hint">Enter a new 4-digit PIN and save.</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+            <input class="input" id="new-pin" type="password" inputmode="numeric" maxlength="4" placeholder="New PIN" style="width:120px" />
+            <button class="btn btn-primary btn-sm" onclick="savePin()">Update PIN</button>
+            <span id="pin-msg" style="font-size:12px;color:var(--green-text)"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Pairing DM template</span></div>
+        <div class="settings-hint" style="margin-bottom:8px">Variables: <code>{name1}</code> <code>{name2}</code> <code>{email1}</code> <code>{email2}</code> <code>{question}</code></div>
+        <textarea class="input" id="dm-template" rows="7" oninput="refreshPreview()"></textarea>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Reminder DM template</span></div>
+        <textarea class="input" id="reminder-template" rows="5"></textarea>
+        <button class="btn btn-primary" style="margin-top:10px" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save all</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Opt-in invite message</span></div>
+        <div class="settings-hint" style="margin-bottom:8px">Message used when DMing employees to invite them to join coffee chats.</div>
+        <textarea class="input" id="invite-template" rows="5"></textarea>
+        <button class="btn btn-sm" style="margin-top:8px" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Defaults ──────────────────────────────────────────────────────────────────
+const DEFAULT_PIN = '1234';
+const DEFAULT_DM = `Hi {name1} and {name2}! ☕
+
+You've been selected as this month's Coffee Chat pair at TMO!
+
+Coffee Chats are a chance to step outside your day-to-day and connect with a teammate from a different part of the company. Whether you grab a virtual coffee, hop on a quick call, or find time to chat in person — the goal is simple: get to know each other.
+
+To get the conversation going, here's your icebreaker question:
+
+*"{question}"*
+
+Find 20–30 minutes that works for both of you and reach out to schedule:
+• {name1}: {email1}
+• {name2}: {email2}
+
+We hope you enjoy the chat — these connections are what make TMO a great place to work. 🙌
+
+_Please keep your conversation respectful and professional. Coffee Chats are a company-sponsored program and our standard workplace guidelines apply._`;
+
+const DEFAULT_REMINDER = `Hey {name1} and {name2} 👋
+
+Just a friendly nudge — you were paired for a Coffee Chat earlier this month and we haven't heard that you've connected yet!
+
+Life gets busy, totally understood. But even a quick 20-minute call can go a long way. Your icebreaker is still waiting:
+
+*"{question}"*
+
+Hope you can find a time this week! ☕
+
+_As a reminder, please keep your conversation respectful and in line with TMO's workplace guidelines._`;
+
+const DEFAULT_INVITE = `Hey {name}! 👋
+
+We're running a Coffee Chat program at TMO — each month you'll be randomly paired with someone from a different team for a quick 20-30 min chat.
+
+It's a great way to meet people outside your immediate team. Want in?
+
+Just reply "yes" and I'll add you to the next round! ☕`;
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+const TEAM_COLORS={Sales:'badge-purple',Engineering:'badge-blue',Marketing:'badge-coral','Customer Success':'badge-teal',Operations:'badge-amber',Product:'badge-pink',Finance:'badge-gray',HR:'badge-teal',Support:'badge-teal',Design:'badge-pink','Vital Design':'badge-pink',Leadership:'badge-amber',Legal:'badge-gray',DevOps:'badge-blue'};
+const AVATAR_STYLES=[['#EEEDFE','#3C3489'],['#E6F1FB','#0C447C'],['#FAECE7','#712B13'],['#E1F5EE','#085041'],['#FAEEDA','#633806'],['#FBEAF0','#72243E'],['#F1EFE8','#5F5E5A']];
+const CAT_COLORS={Work:'#185FA5',Personal:'#0F6E56',Fun:'#BA7517',Career:'#533AB7','Cross-team':'#993556'};
+const TEAMS=['Sales','Development','Operations','Finance','HR','Leadership'];
+const QUESTIONS=[
+  {text:"What's one thing you're working on right now that you're excited about?",cat:"Work"},
+  {text:"If you could swap roles with anyone at the company for a day, who would it be and why?",cat:"Work"},
+  {text:"What's the most surprising thing you've learned since joining the team?",cat:"Work"},
+  {text:"What does a great Monday morning look like for you?",cat:"Work"},
+  {text:"What's a skill you have that most people here don't know about?",cat:"Personal"},
+  {text:"If you could travel anywhere in the next 6 months, where would you go?",cat:"Personal"},
+  {text:"What's a book, podcast, or show you've been into lately?",cat:"Personal"},
+  {text:"What's your go-to order when the team does coffee or lunch?",cat:"Personal"},
+  {text:"What hobby or side project are you currently obsessed with?",cat:"Personal"},
+  {text:"If your team had a theme song, what would it be?",cat:"Fun"},
+  {text:"What's the most underrated city you've ever visited?",cat:"Fun"},
+  {text:"What app on your phone do you think is genuinely underrated?",cat:"Fun"},
+  {text:"What's a career lesson you had to learn the hard way?",cat:"Career"},
+  {text:"What's something you wish you'd known before starting in your current role?",cat:"Career"},
+  {text:"Who's been the most influential person in your career so far?",cat:"Career"},
+  {text:"If you could add one thing to how our teams collaborate, what would it be?",cat:"Cross-team"},
+  {text:"What does your team do that you think other teams don't fully see or appreciate?",cat:"Cross-team"},
+  {text:"What's a challenge your team is facing that you think another team might have insight on?",cat:"Cross-team"},
+];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let pairs=[];
+let questions=[...QUESTIONS];
+let dmSentSet=new Set(); // emails already sent invite DMs
+
+let employees=[
+  {name:"Adam Loughran",email:"aloughran@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Akhil Sahai",email:"asahai@themortgageoffice.com",team:"Development",in:true},
+  {name:"Alex Ho",email:"alexho@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Andrei Yakovlev",email:"ayakovlev@themortgageoffice.com",team:"Development",in:true},
+  {name:"Andres Quintana",email:"aquintana@themortgageoffice.com",team:"",in:true},
+  {name:"Andres Rodriguez",email:"arodriguez@themortgageoffice.com",team:"Development",in:true},
+  {name:"Andrew Bermudez",email:"abermudez@themortgageoffice.com",team:"Development",in:true},
+  {name:"Anthony Licas",email:"alicas@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Ben Cheung",email:"bcheung@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Ben Vigil",email:"bvigil@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Bobby Luedtke",email:"bluedtke@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Brett Lawrence",email:"blawrence@themortgageoffice.com",team:"Leadership",in:true},
+  {name:"Brian Krotine",email:"bkrotine@themortgageoffice.com",team:"Development",in:true},
+  {name:"Cameron Larsen",email:"clarsen@themortgageoffice.com",team:"Development",in:true},
+  {name:"Carlos Nodarse",email:"carlos@themortgageoffice.com",team:"Leadership",in:true},
+  {name:"Chad Cuervo",email:"ccuervo@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Charlie Gale",email:"cgale@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Chelsea Burke-Gomez",email:"cburkegomez@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Cody Snyder",email:"csnyder@themortgageoffice.com",team:"",in:true},
+  {name:"Dani McIntire",email:"dmcintire@themortgageoffice.com",team:"HR",in:true},
+  {name:"Danielle Moore",email:"dmoore@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Darshil Sheth",email:"dsheth@themortgageoffice.com",team:"",in:true},
+  {name:"Darshit Desai",email:"ddesai@themortgageoffice.com",team:"",in:true},
+  {name:"David Dilitkanich",email:"ddilitkanich@themortgageoffice.com",team:"Operations",in:true},
+  {name:"David Lao",email:"dlao@themortgageoffice.com",team:"Development",in:true},
+  {name:"David Ng",email:"davidng@themortgageoffice.com",team:"Development",in:true},
+  {name:"Devin Vuong",email:"dvuong@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Dmytro Herbali",email:"dherbali@themortgageoffice.com",team:"Development",in:true},
+  {name:"Edwin Mendaros",email:"emendaros@themortgageoffice.com",team:"Development",in:true},
+  {name:"Elizabeth Morales",email:"elizabeth@themortgageoffice.com",team:"Leadership",in:true},
+  {name:"Elizabeth Nguyen",email:"enguyen@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Emrah Ilter",email:"eilter@themortgageoffice.com",team:"",in:true},
+  {name:"Eric Gerwig",email:"egerwig@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Eric Swanson",email:"eswanson@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Fredy Guibert",email:"fguibert@themortgageoffice.com",team:"",in:true},
+  {name:"Hugo Lopez",email:"hlopez@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Itzzayana Jarquin",email:"ijarquin@themortgageoffice.com",team:"HR",in:true},
+  {name:"Jackson Farren",email:"jfarren@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Janak V",email:"janak@themortgageoffice.com",team:"",in:true},
+  {name:"Jarrett Pugh",email:"jpugh@themortgageoffice.com",team:"Development",in:true},
+  {name:"Jason Landon",email:"jlandon@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Josh Alvarez",email:"jalvarez@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Kaevon Zanjani",email:"kzanjani@themortgageoffice.com",team:"Development",in:true},
+  {name:"Katalina Baljeu",email:"kbaljeu@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Katie Ball",email:"kball@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Kristen Meek",email:"kmeek@themortgageoffice.com",team:"Finance",in:true},
+  {name:"Lauren Paul",email:"lpaul@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Lauren Scott",email:"lscott@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Lloyd Gatobu",email:"lgatobu@themortgageoffice.com",team:"Finance",in:true},
+  {name:"Logan Beaton",email:"lbeaton@themortgageoffice.com",team:"Development",in:true},
+  {name:"Louis Juego",email:"ljuego@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Maksym Skoryk",email:"mskoryk@themortgageoffice.com",team:"Development",in:true},
+  {name:"Mandeep Singh",email:"msingh@themortgageoffice.com",team:"Development",in:true},
+  {name:"Mariska Crain",email:"mcrain@themortgageoffice.com",team:"Development",in:true},
+  {name:"Mark Farah",email:"mfarah@themortgageoffice.com",team:"Finance",in:true},
+  {name:"Matthew Gonzalez",email:"mgonzalez@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Mattie Lanz",email:"mlanz@themortgageoffice.com",team:"",in:true},
+  {name:"Maxwell Eastman",email:"meastman@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Michael Brohamer",email:"mbrohamer@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Michael Norris",email:"mnorris@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Miranda Garcia",email:"mgarcia@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Mojo George",email:"mgeorge@themortgageoffice.com",team:"Development",in:true},
+  {name:"Morgan Lucas",email:"mlucas@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Nathan Goodhart",email:"ngoodhart@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Nathan Gosselin",email:"ngosselin@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Naveen Nandipati",email:"nnandipati@themortgageoffice.com",team:"",in:true},
+  {name:"Nick Mercuro",email:"nmercuro@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Oleksandr Horbovskyi",email:"ohorbovskyi@themortgageoffice.com",team:"Development",in:true},
+  {name:"Pavlo Naumenko",email:"pnaumenko@themortgageoffice.com",team:"Development",in:true},
+  {name:"Peyton Politewicz",email:"ppolitewicz@themortgageoffice.com",team:"",in:true},
+  {name:"Prabuddha Lakshminarayana",email:"plakshminarayana@themortgageoffice.com",team:"Development",in:true},
+  {name:"Ramiro Ruiz",email:"ramiro@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Ranadeep Bhowmik",email:"rbhowmik@themortgageoffice.com",team:"",in:true},
+  {name:"Ray Reyes",email:"rreyes@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Renee Richer",email:"rricher@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Richard Nuno",email:"rnuno@themortgageoffice.com",team:"",in:true},
+  {name:"Rik Stuenckel",email:"rik@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Roxanne Tubbs",email:"rtubbs@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Ryan Byrd",email:"rbyrd@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Ryan Forsythe",email:"rforsythe@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Sam Chu",email:"schu@themortgageoffice.com",team:"Development",in:true},
+  {name:"Sam Nguyen",email:"snguyen@themortgageoffice.com",team:"Sales",in:true},
+  {name:"Sandeep Chauhan",email:"schauhan@themortgageoffice.com",team:"Development",in:true},
+  {name:"Santosh Burada",email:"sburada@themortgageoffice.com",team:"",in:true},
+  {name:"Shafeeda Puthiyara Maliyekkal",email:"smaliyekkal@themortgageoffice.com",team:"",in:true},
+  {name:"Sophie Kamenov",email:"skamenov@themortgageoffice.com",team:"Development",in:true},
+  {name:"Sourabh Chirimar",email:"sourabh@themortgageoffice.com",team:"Leadership",in:true},
+  {name:"Supriya Bhardwaj",email:"sbhardwaj@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Travis Kniffen",email:"tkniffen@themortgageoffice.com",team:"Development",in:true},
+  {name:"Trystan Wilde",email:"twilde@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Vada Littlejohn",email:"vada@themortgageoffice.com",team:"Finance",in:true},
+  {name:"Valeriia Kuznetsova",email:"vkuznetsova@themortgageoffice.com",team:"",in:true},
+  {name:"William Chon",email:"wchon@themortgageoffice.com",team:"",in:true},
+  {name:"Xavier Alvarez",email:"xalvarez@themortgageoffice.com",team:"Operations",in:true},
+  {name:"Zhala Bargeshady",email:"zbargeshady@themortgageoffice.com",team:"",in:true},
+];
+
+// ── PIN logic ─────────────────────────────────────────────────────────────────
+let pinBuffer='';
+let pinActive=true;
+function pinPress(d){
+  if(pinBuffer.length>=4)return;
+  pinBuffer+=d;
+  updatePinDots();
+  if(pinBuffer.length===4) setTimeout(checkPin,120);
+}
+function pinDel(){
+  pinBuffer=pinBuffer.slice(0,-1);
+  updatePinDots();
+  document.getElementById('pin-error').textContent='';
+}
+function updatePinDots(){
+  for(let i=0;i<4;i++){
+    document.getElementById('d'+i).classList.toggle('filled',i<pinBuffer.length);
+  }
+}
+function checkPin(){
+  const correct=localStorage.getItem('cc_admin_pin')||DEFAULT_PIN;
+  if(pinBuffer===correct){
+    pinActive=false;
+    document.getElementById('pin-wrap').style.display='none';
+    document.getElementById('app-wrap').style.display='block';
+    initApp();
+  } else {
+    document.getElementById('pin-error').textContent='Incorrect PIN. Try again.';
+    pinBuffer='';
+    updatePinDots();
+  }
+}
+document.addEventListener('keydown',e=>{
+  if(!pinActive)return;
+  if(/^[0-9]$/.test(e.key))pinPress(e.key);
+  if(e.key==='Backspace')pinDel();
+});
+function logout(){
+  pinActive=true;
+  document.getElementById('app-wrap').style.display='none';
+  document.getElementById('pin-wrap').style.display='flex';
+  pinBuffer='';updatePinDots();
+  document.getElementById('pin-error').textContent='';
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+function loadSettings(){
+  return{
+    token:localStorage.getItem('cc_token')||'',
+    channel:localStorage.getItem('cc_channel')||'coffee-chat',
+    reminderDays:parseInt(localStorage.getItem('cc_reminder_days')||'3'),
+    dmTemplate:localStorage.getItem('cc_dm_template')||DEFAULT_DM,
+    reminderTemplate:localStorage.getItem('cc_reminder_template')||DEFAULT_REMINDER,
+    inviteTemplate:localStorage.getItem('cc_invite_template')||DEFAULT_INVITE,
+  };
+}
+function saveSettings(){
+  localStorage.setItem('cc_token',document.getElementById('slack-token').value.trim());
+  localStorage.setItem('cc_channel',document.getElementById('slack-channel').value.trim());
+  localStorage.setItem('cc_reminder_days',document.getElementById('reminder-days').value);
+  localStorage.setItem('cc_dm_template',document.getElementById('dm-template').value);
+  localStorage.setItem('cc_reminder_template',document.getElementById('reminder-template').value);
+  localStorage.setItem('cc_invite_template',document.getElementById('invite-template').value);
+  renderSlackBar();
+  showToast('Settings saved.');
+}
+function savePin(){
+  const p=document.getElementById('new-pin').value.trim();
+  if(!/^\d{4}$/.test(p)){showToast('PIN must be exactly 4 digits.','error');return;}
+  localStorage.setItem('cc_admin_pin',p);
+  document.getElementById('new-pin').value='';
+  document.getElementById('pin-msg').textContent='PIN updated.';
+  setTimeout(()=>document.getElementById('pin-msg').textContent='',2500);
+}
+function initSettings(){
+  const s=loadSettings();
+  document.getElementById('slack-token').value=s.token;
+  document.getElementById('slack-channel').value=s.channel;
+  document.getElementById('reminder-days').value=s.reminderDays;
+  document.getElementById('dm-template').value=s.dmTemplate;
+  document.getElementById('reminder-template').value=s.reminderTemplate;
+  document.getElementById('invite-template').value=s.inviteTemplate;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function initials(n){return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}
+function avatarDiv(name,idx){const s=AVATAR_STYLES[idx%AVATAR_STYLES.length];return`<div class="avatar" style="background:${s[0]};color:${s[1]}">${initials(name)}</div>`}
+function teamBadge(t){if(!t)return`<span class="badge badge-gray muted">—</span>`;return`<span class="badge ${TEAM_COLORS[t]||'badge-gray'}">${t}</span>`}
+function empIdx(name){return employees.findIndex(e=>e.name===name)}
+let toastTimer;
+function showToast(msg,type='success'){
+  const el=document.getElementById('toast');
+  el.className='toast toast-'+type;
+  el.innerHTML=`<i class="ti ti-${type==='error'?'alert-circle':type==='info'?'brand-slack':'check'}"></i> ${msg}`;
+  el.style.display='flex';clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.style.display='none',4000);
+}
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active',el.getAttribute('onclick').includes("'"+t+"'")));
+  ['pairs','employees','questions','settings'].forEach(s=>document.getElementById('sec-'+s).classList.toggle('active',s===t));
+  if(t==='settings'){initSettings();setTimeout(refreshPreview,50);}
+}
+function updateStats(){
+  document.getElementById('stat-in').textContent=employees.filter(e=>e.in).length;
+  document.getElementById('stat-pairs').textContent=pairs.length;
+  document.getElementById('stat-connected').textContent=pairs.filter(p=>p.connected).length;
+  document.getElementById('stat-pending').textContent=pairs.filter(p=>!p.connected).length;
+  const sub=document.getElementById('roster-sub');
+  if(sub)sub.textContent=`${employees.filter(e=>e.in).length} participating · ${employees.filter(e=>!e.in).length} opted out · ${employees.length} total`;
+}
+function renderSlackBar(){
+  const s=loadSettings();
+  const bar=document.getElementById('slack-status-bar');if(!bar)return;
+  bar.innerHTML=s.token
+    ?`<div class="slack-bar ok"><span class="slack-dot dot-ok"></span>Slack connected · posting to #${s.channel} · ${s.reminderDays}-day reminders</div>`
+    :`<div class="slack-bar warn"><span class="slack-dot dot-warn"></span>Slack not configured — add your bot token in <a href="#" onclick="switchTab('settings');return false" style="color:inherit;font-weight:500;text-decoration:underline">Settings</a> to send DMs.</div>`;
+}
+
+// ── App init ──────────────────────────────────────────────────────────────────
+function initApp(){
+  renderSlackBar();
+  renderPairs();
+  renderEmployees();
+  renderQuestions();
+  updateStats();
+}
+
+// ── Pairings ──────────────────────────────────────────────────────────────────
+function pickQ(used){
+  const avail=questions.map((_,i)=>i).filter(i=>!used.has(i));
+  const pool=avail.length?avail:questions.map((_,i)=>i);
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+function generatePairs(){
+  const active=employees.filter(e=>e.in);
+  if(active.length<2){showToast('Need at least 2 participating employees.','error');return;}
+  const shuffled=[...active].sort(()=>Math.random()-.5);
+  const assigned=new Set();pairs=[];const usedQ=new Set();
+  for(let i=0;i<shuffled.length;i++){
+    if(assigned.has(i))continue;
+    const a=shuffled[i];let b=null,bi=-1;
+    for(let j=i+1;j<shuffled.length;j++){
+      if(!assigned.has(j)&&(shuffled[j].team!==a.team||!a.team||!shuffled[j].team)){b=shuffled[j];bi=j;break;}
+    }
+    if(!b){for(let j=i+1;j<shuffled.length;j++){if(!assigned.has(j)){b=shuffled[j];bi=j;break;}}}
+    if(!b)continue;
+    assigned.add(i);assigned.add(bi);
+    const qi=pickQ(usedQ);usedQ.add(qi);
+    pairs.push({a,b,question:questions[qi],qIdx:qi,connected:false,pairedAt:null});
+  }
+  renderPairs();updateStats();
+  showToast(`Generated ${pairs.length} pairs across ${new Set(active.map(e=>e.team).filter(Boolean)).size} teams.`);
+}
+function toggleConnected(i){pairs[i].connected=!pairs[i].connected;renderPairs();updateStats();}
+function reshufflePair(i){
+  const used=new Set(pairs.map(p=>p.qIdx));used.delete(pairs[i].qIdx);
+  const avail=questions.map((_,qi)=>qi).filter(qi=>!used.has(qi));
+  const pool=avail.length?avail:questions.map((_,qi)=>qi);
+  const ni=pool[Math.floor(Math.random()*pool.length)];
+  pairs[i].question=questions[ni];pairs[i].qIdx=ni;renderPairs();
+}
+function renderPairs(){
+  const el=document.getElementById('pairs-list');if(!el)return;
+  if(!pairs.length){el.innerHTML='<div class="empty">Click "Generate pairings" to create this round\'s matches.<br><span style="font-size:12px;color:var(--text3)">Make sure employees have teams assigned first.</span></div>';return;}
+  const s=loadSettings();const now=Date.now();const rms=s.reminderDays*864e5;
+  el.innerHTML=pairs.map((p,i)=>{
+    const ai=empIdx(p.a.name),bi=empIdx(p.b.name);
+    const needsReminder=p.pairedAt&&!p.connected&&(now-p.pairedAt>=rms);
+    let badge=p.connected?`<span class="connected-badge"><i class="ti ti-check" style="font-size:10px"></i> Connected</span>`
+      :needsReminder?`<span class="reminder-badge"><i class="ti ti-bell" style="font-size:10px"></i> Reminder due</span>`:'';
+    return`<div class="pair-card${p.connected?' connected':''}">
+      <div style="display:flex;gap:6px;flex-shrink:0">${avatarDiv(p.a.name,ai)}${avatarDiv(p.b.name,bi)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+          <div class="pair-names">${p.a.name} &amp; ${p.b.name}</div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${badge}
+            <button class="btn btn-sm" onclick="toggleConnected(${i})"><i class="ti ti-${p.connected?'refresh':'check'}"></i> ${p.connected?'Unmark':'Mark connected'}</button>
+          </div>
+        </div>
+        <div class="pair-meta">${teamBadge(p.a.team)} <span style="color:var(--border2)">&amp;</span> ${teamBadge(p.b.team)}
+          <span style="color:var(--text3);font-size:11px">${p.a.email} · ${p.b.email}</span>
+        </div>
+        <div class="question-box" style="border-left-color:${CAT_COLORS[p.question.cat]||'#888'}">
+          <span class="q-cat-label" style="color:${CAT_COLORS[p.question.cat]||'#888'}">${p.question.cat}</span>
+          ${p.question.text}
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm" onclick="reshufflePair(${i})"><i class="ti ti-refresh"></i> New question</button>
+          <button class="btn btn-sm" onclick="repairPair(${i})"><i class="ti ti-arrows-exchange"></i> Re-pair</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function repairPair(i) {
+  var p = pairs[i];
+  var active = employees.filter(function(e){ return e.in; });
+  var q1 = "Re-pair: " + p.a.name + " & " + p.b.name + "\n\nWho do you want to REMOVE?\n0 = " + p.a.name + "\n1 = " + p.b.name;
+  var removeChoice = prompt(q1);
+  if (removeChoice === null) return;
+  var removeA = removeChoice.trim() === "0";
+  var keeper = removeA ? p.b : p.a;
+  var available = active.filter(function(e){ return e.email !== p.a.email && e.email !== p.b.email && e.team !== keeper.team; });
+  var fallback = active.filter(function(e){ return e.email !== p.a.email && e.email !== p.b.email; });
+  var pool = available.length ? available : fallback;
+  if (!pool.length) { showToast("No available employees to swap in.", "error"); return; }
+  var poolList = pool.map(function(e, idx){ return idx + ": " + e.name + " (" + (e.team || "no team") + ")"; }).join("\n");
+  var q2 = "Who do you want to swap IN?\n\n" + poolList;
+  var swapChoice = prompt(q2);
+  if (swapChoice === null) return;
+  var swapIdx = parseInt(swapChoice.trim());
+  if (isNaN(swapIdx) || swapIdx < 0 || swapIdx >= pool.length) { showToast("Invalid selection.", "error"); return; }
+  var newPerson = pool[swapIdx];
+  if (removeA) { pairs[i].a = newPerson; } else { pairs[i].b = newPerson; }
+  renderPairs();
+  updateStats();
+  showToast("Re-paired: " + keeper.name + " & " + newPerson.name);
+}
+
+function copyPairSummary(){
+  if(!pairs.length){showToast('No pairs yet.','error');return;}
+  navigator.clipboard.writeText(pairs.map((p,i)=>`Pair ${i+1}: ${p.a.name} + ${p.b.name}\nQuestion: ${p.question.text}`).join('\n\n')).then(()=>showToast('Copied to clipboard.'));
+}
+
+// ── Slack ─────────────────────────────────────────────────────────────────────
+async function slackPost(ep,body){
+  const s=loadSettings();
+  if(!s.token)throw new Error('No Slack token. Add it in Settings.');
+  const r=await fetch('https://slack.com/api/'+ep,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.token},body:JSON.stringify(body)});
+  const d=await r.json();if(!d.ok)throw new Error(d.error);return d;
+}
+async function lookupSlackUser(email){try{return(await slackPost('users.lookupByEmail',{email})).user?.id||null;}catch{return null;}}
+async function sendDM(userId,text){const ch=await slackPost('conversations.open',{users:userId});await slackPost('chat.postMessage',{channel:ch.channel.id,text});}
+function buildMsg(p,tmpl){return tmpl.replace(/{name1}/g,p.a.name).replace(/{name2}/g,p.b.name).replace(/{email1}/g,p.a.email).replace(/{email2}/g,p.b.email).replace(/{question}/g,p.question.text);}
+
+async function sendToSlack(){
+  if(!pairs.length){showToast('Generate pairings first.','error');return;}
+  const s=loadSettings();
+  if(!s.token){showToast('Add your Slack bot token in Settings.','error');return;}
+  const btn=document.getElementById('btn-send-slack');
+  btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2"></i> Sending...';
+  try{
+    // Channel announcement
+    const lines=pairs.map((p,i)=>`${i+1}. *${p.a.name}* (${p.a.team||'—'}) ↔ *${p.b.name}* (${p.b.team||'—'})`).join('\n');
+    await slackPost('chat.postMessage',{channel:s.channel,text:`☕ *Coffee Chat pairings are in for this month!*\n\n${lines}\n\nCheck your DMs for your icebreaker question. Have a great chat! 🎉`});
+    // DMs
+    let sent=0,failed=0;
+    for(const p of pairs){
+      const[u1,u2]=await Promise.all([lookupSlackUser(p.a.email),lookupSlackUser(p.b.email)]);
+      const msg=buildMsg(p,s.dmTemplate);
+      if(u1&&u2){try{const ch=await slackPost('conversations.open',{users:`${u1},${u2}`});await slackPost('chat.postMessage',{channel:ch.channel.id,text:msg});sent++;}catch{failed++;}}
+      else{
+        if(u1){try{await sendDM(u1,msg);sent++;}catch{failed++;}}
+        if(u2){try{await sendDM(u2,msg);sent++;}catch{failed++;}}
+        if(!u1&&!u2)failed++;
+      }
+      p.pairedAt=Date.now();
+    }
+    renderPairs();
+    showToast(`Posted to #${s.channel} · ${sent} DMs sent${failed?` · ${failed} failed`:''}`, 'info');
+  }catch(e){showToast(e.message,'error');}
+  finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-brand-slack"></i> Send to Slack';}
+}
+
+async function sendReminders(){
+  const pending=pairs.filter(p=>!p.connected);
+  if(!pending.length){showToast('No pending pairs to remind.','error');return;}
+  const s=loadSettings();if(!s.token){showToast('Add Slack token in Settings.','error');return;}
+  const btn=document.getElementById('btn-reminders');
+  btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2"></i> Sending...';
+  let sent=0,failed=0;
+  for(const p of pending){
+    const[u1,u2]=await Promise.all([lookupSlackUser(p.a.email),lookupSlackUser(p.b.email)]);
+    const msg=buildMsg(p,s.reminderTemplate);
+    if(u1&&u2){try{const ch=await slackPost('conversations.open',{users:`${u1},${u2}`});await slackPost('chat.postMessage',{channel:ch.channel.id,text:msg});sent++;}catch{failed++;}}
+  }
+  showToast(`Reminders sent to ${sent} pairs.${failed?' '+failed+' failed.':''}`, 'info');
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-bell"></i> Send reminders';
+}
+
+async function dmEmployee(idx){
+  const e=employees[idx];
+  const s=loadSettings();if(!s.token){showToast('Add Slack token in Settings first.','error');return;}
+  const btn=document.querySelector(`[data-dm="${idx}"]`);
+  if(btn){btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2"></i>';}
+  try{
+    const uid=await lookupSlackUser(e.email);
+    if(!uid)throw new Error(`${e.name} not found in Slack`);
+    const msg=s.inviteTemplate.replace(/{name}/g,e.name.split(' ')[0]).replace(/{email}/g,e.email);
+    await sendDM(uid,msg);
+    dmSentSet.add(e.email);
+    if(btn){btn.className='dm-btn sent';btn.innerHTML='<i class="ti ti-check"></i> Sent';btn.disabled=true;}
+    showToast(`Invite sent to ${e.name}.`,'info');
+  }catch(err){
+    showToast(err.message,'error');
+    if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-brand-slack"></i> DM invite';}
+  }
+}
+
+async function dmAll(){
+  const s=loadSettings();if(!s.token){showToast('Add Slack token in Settings first.','error');return;}
+  const btn=document.getElementById('btn-dm-all');
+  btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2"></i> Sending...';
+  let sent=0,failed=0;
+  for(const e of employees){
+    if(dmSentSet.has(e.email))continue;
+    try{
+      const uid=await lookupSlackUser(e.email);
+      if(!uid){failed++;continue;}
+      const msg=s.inviteTemplate.replace(/{name}/g,e.name.split(' ')[0]).replace(/{email}/g,e.email);
+      await sendDM(uid,msg);
+      dmSentSet.add(e.email);sent++;
+    }catch{failed++;}
+  }
+  renderEmployees();
+  showToast(`Invite DMs sent to ${sent} people.${failed?' '+failed+' not found in Slack.':''}`, 'info');
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-brand-slack"></i> DM everyone to join';
+}
+
+function copyOptInMsg(){
+  const s=loadSettings();
+  const msg=`Hey team! 👋\n\nWe're kicking off Coffee Chats at TMO — each month you'll be paired with someone from a different team for a quick 20-30 min chat.\n\nWant in? Reply to this message or let me know and I'll add you to the list! ☕`;
+  navigator.clipboard.writeText(msg).then(()=>showToast('Opt-in message copied — paste it in Slack!'));
+}
+
+
+function refreshPreview() {
+  const tmpl = document.getElementById('dm-template')?.value || loadSettings().dmTemplate;
+  const sample = {
+    a: { name: 'Sarah Chen', email: 'schen@themortgageoffice.com', team: 'Engineering' },
+    b: { name: 'Marcus Rivera', email: 'mrivera@themortgageoffice.com', team: 'Sales' },
+    question: 'What does your team do that you think other teams don\'t fully see or appreciate?'
+  };
+  const preview = buildMsg(sample, tmpl);
+  const el = document.getElementById('msg-preview');
+  if (el) el.textContent = preview;
+}
+
+async function testSlack(){
+  const el=document.getElementById('test-result');el.textContent='Testing...';
+  try{await slackPost('auth.test',{});el.style.color='var(--green-text)';el.textContent='✓ Connected successfully';}
+  catch(e){el.style.color='var(--red-text)';el.textContent='✗ '+e.message;}
+}
+
+// ── Employees ─────────────────────────────────────────────────────────────────
+function renderEmployees(){
+  const q=(document.getElementById('emp-search')?.value||'').toLowerCase();
+  const tf=document.getElementById('filter-team')?.value||'';
+  const sf=document.getElementById('filter-status')?.value||'';
+
+  // Rebuild team filter options
+  const sel=document.getElementById('filter-team');
+  if(sel){
+    const cur=sel.value;
+    sel.innerHTML='<option value="">All teams</option>';
+    const used=new Set(employees.map(e=>e.team).filter(Boolean));
+    TEAMS.forEach(t=>{if(used.has(t)){const o=document.createElement('option');o.value=o.textContent=t;if(t===cur)o.selected=true;sel.appendChild(o);}});
+  }
+
+  const filtered=employees.filter(e=>{
+    if(q&&!e.name.toLowerCase().includes(q)&&!e.email.toLowerCase().includes(q))return false;
+    if(tf&&e.team!==tf)return false;
+    if(sf==='in'&&!e.in)return false;
+    if(sf==='out'&&e.in)return false;
+    if(sf==='noteam'&&(e.team||!e.in))return false;
+    return true;
+  });
+
+  const wrap=document.getElementById('emp-table-wrap');if(!wrap)return;
+  if(!filtered.length){wrap.innerHTML='<div class="empty">No employees match.</div>';updateStats();return;}
+
+  let html=`<table class="emp-table"><thead><tr>
+    <th></th><th>Name</th><th>Email</th><th>Team</th>
+    <th style="text-align:center">In round</th>
+    <th>Slack invite</th>
+  </tr></thead><tbody>`;
+
+  filtered.forEach(e=>{
+    const ri=empIdx(e.name);
+    const opts=TEAMS.map(t=>`<option value="${t}"${e.team===t?' selected':''}>${t}</option>`).join('');
+    const pill=e.in
+      ?`<button class="pill-in" onclick="toggleIn(${ri})"><i class="ti ti-check" style="font-size:10px"></i> In</button>`
+      :`<button class="pill-out" onclick="toggleIn(${ri})"><i class="ti ti-minus" style="font-size:10px"></i> Out</button>`;
+    const sent=dmSentSet.has(e.email);
+    const dmBtn=`<button class="dm-btn${sent?' sent':''}" data-dm="${ri}" onclick="dmEmployee(${ri})" ${sent?'disabled':''}>
+      <i class="ti ti-${sent?'check':'brand-slack'}" style="font-size:11px"></i> ${sent?'Sent':'DM invite'}
+    </button>`;
+    html+=`<tr class="${e.in?'':'opted-out'}">
+      <td>${avatarDiv(e.name,ri)}</td>
+      <td style="font-weight:500">${e.name}</td>
+      <td class="emp-email">${e.email}</td>
+      <td><select class="input" style="width:148px;padding:4px 6px;font-size:12px" onchange="setTeam(${ri},this.value)">
+        <option value="">— unset —</option>${opts}
+      </select></td>
+      <td style="text-align:center">${pill}</td>
+      <td>${dmBtn}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table>`;
+  wrap.innerHTML=html;
+  updateStats();
+}
+
+function setTeam(i,t){employees[i].team=t;updateStats();}
+function toggleIn(i){employees[i].in=!employees[i].in;renderEmployees();}
+function setAllIn(v){employees.forEach(e=>e.in=v);renderEmployees();}
+function addEmployee(){
+  const name=prompt('Full name:');if(!name?.trim())return;
+  const email=prompt('Work email:');if(!email?.trim())return;
+  employees.push({name:name.trim(),email:email.trim().toLowerCase(),team:'',in:false});
+  employees.sort((a,b)=>a.name.localeCompare(b.name));
+  renderEmployees();showToast(name.trim()+' added to roster.');
+}
+
+// ── Questions ─────────────────────────────────────────────────────────────────
+const catBadge={Work:'badge-blue',Personal:'badge-teal',Fun:'badge-amber',Career:'badge-purple','Cross-team':'badge-pink'};
+function renderQuestions(){
+  document.getElementById('q-count').textContent=`(${questions.length})`;
+  document.getElementById('q-list').innerHTML=questions.map((q,i)=>`
+    <div class="q-item">
+      <div style="flex:1">
+        <div style="font-size:13px;margin-bottom:5px">${q.text}</div>
+        <span class="badge ${catBadge[q.cat]||'badge-gray'}">${q.cat}</span>
+      </div>
+      <button class="btn btn-sm" onclick="removeQuestion(${i})" title="Remove"><i class="ti ti-trash"></i></button>
+    </div>`).join('');
+}
+function removeQuestion(i){if(!confirm('Remove this question?'))return;questions.splice(i,1);renderQuestions();}
+function addQuestion(){
+  const t=prompt('New icebreaker question:');if(!t?.trim())return;
+  const c=prompt('Category:\nWork / Personal / Fun / Career / Cross-team')||'Personal';
+  questions.push({text:t.trim(),cat:c.trim()});
+  renderQuestions();showToast('Question added.');
+}
+</script>
+</body>
+</html>
